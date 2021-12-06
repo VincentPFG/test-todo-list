@@ -11,8 +11,18 @@ export default () => {
       </form>
       <hr />
       <ul>
-        {list.map(({ text }) => (
-          <li>{text}</li>
+        {list.map(({ text, id }) => (
+          <li>
+            {text}
+            <form method='post'>
+              <input
+                type='hidden'
+                name='toDelete'
+                value={id}
+              />
+              <button type='submit'>Done</button>
+            </form>
+          </li>
         ))}
       </ul>
     </div>
@@ -21,12 +31,21 @@ export default () => {
 
 export const action = async ({ request }) => {
   const fData = await request.formData()
-  console.log(fData.get('task'))
-  await db.item.create({
-    data: { text: fData.get('task') },
-  })
+
+  const task = fData.get('task')
+  if (task)
+    await db.item.create({
+      data: { text: fData.get('task') },
+    })
+
+  const toDelete = fData.get('toDelete')
+  if (toDelete)
+    await db.item.delete({
+      where: { id: parseInt(toDelete) },
+    })
+
   return redirect(request.url)
 }
 
-export const loader = async ({}) =>
+export const loader = async () =>
   await db.item.findMany()
